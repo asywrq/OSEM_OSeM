@@ -11,7 +11,7 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Offence</th>
+                        <th>Offences</th>
                         <th>Amount (RM)</th>
                         <th>Action</th>
                     </tr>

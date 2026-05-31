@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/static/img/logo/logo.png" width="400" alt="OSEM Logo">
+  <img src="public/static/img/logo/logo.png" width="150" alt="OSEM Logo">
 </p>
 
 <h1 align="center">OSEM — Online Summon and Enforcement Management</h1>

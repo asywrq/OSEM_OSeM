@@ -5,13 +5,20 @@
     <h1 class="h3 mb-3"><strong>Issue Compound</strong></h1>
  
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
  
-    {{-- ── Filter / Search bar ── --}}
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+ 
+    {{-- Filter bar --}}
     <div class="card mb-3">
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
@@ -42,7 +49,7 @@
         </div>
     </div>
  
-    {{-- ── Compounds table ── --}}
+    {{-- Compounds table --}}
     <div class="card">
         <div class="card-body p-0">
             <table class="table table-bordered mb-0" id="compounds-table">
@@ -94,13 +101,20 @@
                         <td class="pe-3">
                             <div class="d-flex gap-1">
                                 <button class="btn btn-primary btn-sm"
-                                    onclick="viewCompound({{ $compound->id }})">
-                                    VIEW
-                                </button>
+                                    data-bs-toggle="modal" data-bs-target="#viewModal"
+                                    onclick="openEdit(
+                                        {{ $compound->id }},
+                                        'CMP{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}',
+                                        '{{ $compound->vehicle->plate_no }}',
+                                        {{ $compound->offence_type_id }},
+                                        '{{ $compound->status }}'
+                                    )">VIEW</button>
                                 <button class="btn btn-danger btn-sm"
-                                    onclick="confirmDelete({{ $compound->id }}, 'CMP{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}')">
-                                    DELETE
-                                </button>
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                    onclick="openDelete(
+                                        {{ $compound->id }},
+                                        'CMP{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}'
+                                    )">DELETE</button>
                             </div>
                         </td>
                     </tr>
@@ -120,49 +134,64 @@
     </div>
 </div>
  
-{{-- ════════════════════════════════════════════════
-     Issue New Compound Modal (3-step wizard)
-════════════════════════════════════════════════ --}}
+{{-- ═══════════════════════════════════════
+     ISSUE NEW COMPOUND MODAL (3-step, no AJAX)
+═══════════════════════════════════════ --}}
 <div class="modal fade" id="issueModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
  
-            {{-- Step 1 --}}
-            <div id="modal-step-1">
-                <div class="modal-header">
-                    <h5 class="modal-title">Issue Compound — Step 1 of 3</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resetModal()"></button>
-                </div>
-                <div class="modal-body">
-                    <label class="form-label fw-semibold">Plate No.</label>
-                    <input type="text" id="plate-input" class="form-control"
-                        placeholder="e.g. WQR 4421"
-                        style="text-transform:uppercase;font-family:monospace;font-size:18px">
-                    <div class="text-danger small mt-1 d-none" id="plate-error"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetModal()">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="lookup-btn" onclick="lookupPlate()">
-                        <span id="lookup-spinner" class="spinner-border spinner-border-sm d-none me-1"></span>
-                        Look Up
-                    </button>
-                </div>
+            {{-- Step 1: Plate lookup --}}
+            <div id="step-1">
+                <form method="POST" action="{{ route('officer.compound.lookup') }}">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Issue Compound — Step 1 of 3</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label fw-semibold">Plate No.</label>
+                        <input type="text" name="plate_no" class="form-control"
+                            placeholder="e.g. WQR 4421"
+                            style="text-transform:uppercase;font-family:monospace;font-size:18px"
+                            value="{{ session('lookup_plate') }}"
+                            required>
+                        @if(session('lookup_error'))
+                            <div class="text-danger small mt-1">{{ session('lookup_error') }}</div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Look Up</button>
+                    </div>
+                </form>
             </div>
  
+        </div>
+    </div>
+</div>
+ 
+{{-- Step 2+3 Modal (shown after successful lookup) --}}
+@if(session('lookup_vehicle'))
+@php $lv = session('lookup_vehicle'); @endphp
+<div class="modal fade" id="issueStep2Modal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+ 
             {{-- Step 2 --}}
-            <div id="modal-step-2" class="d-none">
+            <div id="step-2-inner">
                 <div class="modal-header">
                     <h5 class="modal-title">Issue Compound — Step 2 of 3</h5>
                 </div>
                 <div class="modal-body">
                     <table class="table table-sm mb-3">
-                        <tr><th style="width:130px">Plate</th><td id="info-plate">—</td></tr>
-                        <tr><th>Owner</th><td id="info-owner">—</td></tr>
-                        <tr><th>Type</th><td id="info-type">—</td></tr>
-                        <tr><th>Sticker Status</th><td id="info-sticker">—</td></tr>
+                        <tr><th style="width:130px">Plate</th><td style="font-family:monospace;font-weight:600">{{ $lv['plate'] }}</td></tr>
+                        <tr><th>Owner</th><td>{{ $lv['owner'] }}</td></tr>
+                        <tr><th>Type</th><td>{{ $lv['type'] }}</td></tr>
+                        <tr><th>Sticker</th><td><span class="badge bg-success">Valid</span></td></tr>
                     </table>
                     <label class="form-label fw-semibold">Select Offence</label>
-                    <select class="form-select" id="offence-select">
+                    <select class="form-select" id="offence-sel" onchange="updateStep3()">
                         <option value="">-- Select Offence --</option>
                         @foreach($offenceTypes as $offence)
                             <option value="{{ $offence->id }}"
@@ -172,16 +201,19 @@
                             </option>
                         @endforeach
                     </select>
-                    <div class="text-danger small mt-1 d-none" id="offence-error">Please select an offence.</div>
+                    <div class="text-danger small mt-1 d-none" id="offence-err">Please select an offence.</div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="goToStep(1)">Back</button>
-                    <button type="button" class="btn btn-primary" onclick="goToStep(3)">Next</button>
+                    <form method="POST" action="{{ route('officer.compound.clear_lookup') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary">Back</button>
+                    </form>
+                    <button type="button" class="btn btn-primary" onclick="showStep3()">Next</button>
                 </div>
             </div>
  
             {{-- Step 3 --}}
-            <div id="modal-step-3" class="d-none">
+            <div id="step-3-inner" class="d-none">
                 <div class="modal-header">
                     <h5 class="modal-title">Issue Compound — Step 3 of 3</h5>
                 </div>
@@ -190,18 +222,18 @@
                         Please verify the details before issuing. This cannot be undone.
                     </div>
                     <table class="table table-sm mb-0">
-                        <tr><th style="width:130px">Plate</th><td id="confirm-plate">—</td></tr>
-                        <tr><th>Owner</th><td id="confirm-owner">—</td></tr>
+                        <tr><th style="width:130px">Plate</th><td style="font-family:monospace;font-weight:600">{{ $lv['plate'] }}</td></tr>
+                        <tr><th>Owner</th><td>{{ $lv['owner'] }}</td></tr>
                         <tr><th>Offence</th><td id="confirm-offence">—</td></tr>
                         <tr><th>Amount</th><td><strong id="confirm-amount">—</strong></td></tr>
                     </table>
                 </div>
                 <div class="modal-footer">
-                    <form method="POST" action="{{ route('officer.compound.store') }}" id="issue-form">
+                    <button type="button" class="btn btn-secondary" onclick="backToStep2()">Back</button>
+                    <form method="POST" action="{{ route('officer.compound.store') }}">
                         @csrf
-                        <input type="hidden" name="vehicle_id" id="hidden-vehicle-id">
+                        <input type="hidden" name="vehicle_id" value="{{ $lv['id'] }}">
                         <input type="hidden" name="offence_type_id" id="hidden-offence-id">
-                        <button type="button" class="btn btn-secondary me-2" onclick="goToStep(2)">Back</button>
                         <button type="submit" class="btn btn-danger">Issue Compound</button>
                     </form>
                 </div>
@@ -210,39 +242,60 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        new bootstrap.Modal(document.getElementById('issueStep2Modal')).show();
+    });
+    function showStep3() {
+        const sel = document.getElementById('offence-sel');
+        if (!sel.value) {
+            document.getElementById('offence-err').classList.remove('d-none');
+            return;
+        }
+        document.getElementById('offence-err').classList.add('d-none');
+        const opt = sel.options[sel.selectedIndex];
+        document.getElementById('confirm-offence').textContent = opt.dataset.name;
+        document.getElementById('confirm-amount').textContent  = 'RM ' + parseFloat(opt.dataset.amount).toFixed(2);
+        document.getElementById('hidden-offence-id').value     = sel.value;
+        document.getElementById('step-2-inner').classList.add('d-none');
+        document.getElementById('step-3-inner').classList.remove('d-none');
+    }
+    function backToStep2() {
+        document.getElementById('step-3-inner').classList.add('d-none');
+        document.getElementById('step-2-inner').classList.remove('d-none');
+    }
+    function updateStep3() {}
+</script>
+@endif
  
-{{-- Edit / View Compound Modal --}}
+{{-- Edit Modal --}}
 <div class="modal fade" id="viewModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Compound — <span id="edit-compound-ref"></span></h5>
+                <h5 class="modal-title">Edit Compound — <span id="edit-ref"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" id="edit-form">
+            <form method="POST" action="{{ route('officer.compound.update') }}">
                 @csrf
-                @method('PATCH')
+                <input type="hidden" name="compound_id" id="edit-id">
                 <div class="modal-body">
-                    <table class="table table-sm mb-3">
-                        <tr><th style="width:140px">Vehicle No.</th><td id="edit-plate" style="font-family:monospace;font-weight:600"></td></tr>
-                        <tr><th>Owner</th><td id="edit-owner"></td></tr>
-                        <tr><th>Issue Date</th><td id="edit-date"></td></tr>
-                        <tr><th>Issued By</th><td id="edit-officer"></td></tr>
-                    </table>
- 
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Vehicle No.</label>
+                        <input type="text" class="form-control" name="plate_no" id="edit-plate"
+                            style="text-transform:uppercase;font-family:monospace;" required>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Offence Type</label>
-                        <select class="form-select" name="offence_type_id" id="edit-offence-select">
+                        <select class="form-select" name="offence_type_id" id="edit-offence">
                             @foreach($offenceTypes as $offence)
-                                <option value="{{ $offence->id }}"
-                                    data-amount="{{ $offence->amount }}">
+                                <option value="{{ $offence->id }}">
                                     {{ $offence->name }} — RM {{ number_format($offence->amount, 2) }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
- 
-                    <div class="mb-3">
+                    <div class="mb-0">
                         <label class="form-label fw-semibold">Status</label>
                         <select class="form-select" name="status" id="edit-status">
                             <option value="unpaid">Unpaid</option>
@@ -261,7 +314,7 @@
     </div>
 </div>
  
-{{-- Delete Confirm Modal --}}
+{{-- Delete Modal --}}
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
@@ -274,9 +327,9 @@
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <form method="POST" id="delete-form">
+                <form method="POST" action="{{ route('officer.compound.destroy') }}">
                     @csrf
-                    @method('DELETE')
+                    <input type="hidden" name="compound_id" id="delete-id">
                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                 </form>
             </div>
@@ -285,96 +338,6 @@
 </div>
  
 <script>
-// ── Issue wizard ──────────────────────────────────────────────────────────────
-const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
- 
-function goToStep(n) {
-    [1, 2, 3].forEach(i => {
-        document.getElementById('modal-step-' + i).classList.toggle('d-none', i !== n);
-    });
-}
- 
-async function lookupPlate() {
-    const plate  = document.getElementById('plate-input').value.trim().toUpperCase();
-    const errEl  = document.getElementById('plate-error');
-    errEl.classList.add('d-none');
- 
-    if (!plate) {
-        errEl.textContent = 'Please enter a plate number.';
-        errEl.classList.remove('d-none');
-        return;
-    }
- 
-    const btn     = document.getElementById('lookup-btn');
-    const spinner = document.getElementById('lookup-spinner');
-    btn.disabled  = true;
-    spinner.classList.remove('d-none');
- 
-    try {
-        const res  = await fetch('{{ route('officer.compound.lookup') }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
-            body: JSON.stringify({ plate_no: plate }),
-        });
-        const data = await res.json();
- 
-        if (!data.found) {
-            errEl.textContent = data.message || 'Vehicle not found.';
-            errEl.classList.remove('d-none');
-        } else {
-            document.getElementById('info-plate').textContent = data.plate;
-            document.getElementById('info-owner').textContent = data.owner;
-            document.getElementById('info-type').textContent  = data.type;
-            document.getElementById('info-sticker').innerHTML =
-                data.sticker === 'Valid'
-                    ? '<span class="badge bg-success">Valid</span>'
-                    : '<span class="badge bg-danger">Invalid / Not Registered</span>';
-            document.getElementById('hidden-vehicle-id').value = data.id;
-            goToStep(2);
-        }
-    } catch (e) {
-        errEl.textContent = 'An error occurred. Please try again.';
-        errEl.classList.remove('d-none');
-    } finally {
-        btn.disabled = false;
-        spinner.classList.add('d-none');
-    }
-}
- 
-function goToStep(n) {
-    if (n === 3) {
-        const sel    = document.getElementById('offence-select');
-        const errEl  = document.getElementById('offence-error');
-        if (!sel.value) { errEl.classList.remove('d-none'); return; }
-        errEl.classList.add('d-none');
-        const opt = sel.options[sel.selectedIndex];
-        document.getElementById('confirm-plate').textContent   = document.getElementById('info-plate').textContent;
-        document.getElementById('confirm-owner').textContent   = document.getElementById('info-owner').textContent;
-        document.getElementById('confirm-offence').textContent = opt.dataset.name;
-        document.getElementById('confirm-amount').textContent  = 'RM ' + parseFloat(opt.dataset.amount).toFixed(2);
-        document.getElementById('hidden-offence-id').value     = sel.value;
-    }
-    [1, 2, 3].forEach(i =>
-        document.getElementById('modal-step-' + i).classList.toggle('d-none', i !== n)
-    );
-}
- 
-function resetModal() {
-    document.getElementById('plate-input').value = '';
-    document.getElementById('plate-error').classList.add('d-none');
-    document.getElementById('offence-select').value = '';
-    document.getElementById('hidden-vehicle-id').value = '';
-    document.getElementById('hidden-offence-id').value = '';
-    goToStep(1);
-}
- 
-document.getElementById('plate-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') lookupPlate();
-});
- 
-// Reset modal when closed
-document.getElementById('issueModal').addEventListener('hidden.bs.modal', resetModal);
- 
 // ── Table filter ──────────────────────────────────────────────────────────────
 function filterTable() {
     const compound = document.getElementById('filter-compound').value.toLowerCase().replace(/\s/g,'');
@@ -389,37 +352,19 @@ function filterTable() {
     });
 }
  
-// ── View / Edit compound ──────────────────────────────────────────────────────
-const compoundData = @json($compounds->load('vehicle.user', 'offenceType', 'officer')->keyBy('id'));
- 
-function viewCompound(id) {
-    const c = compoundData[id];
-    if (!c) return;
- 
-    document.getElementById('edit-compound-ref').textContent = 'CMP' + String(c.id).padStart(6, '0');
-    document.getElementById('edit-plate').textContent    = c.vehicle?.plate_no ?? '—';
-    document.getElementById('edit-owner').textContent    = c.vehicle?.user?.name ?? '—';
-    document.getElementById('edit-date').textContent     = c.issued_at ? new Date(c.issued_at).toLocaleDateString('en-GB') : '—';
-    document.getElementById('edit-officer').textContent  = c.officer?.name ?? '—';
- 
-    // Set offence select
-    const offSel = document.getElementById('edit-offence-select');
-    offSel.value = c.offence_type_id;
- 
-    // Set status select
-    document.getElementById('edit-status').value = c.status;
- 
-    // Point form to update route
-    document.getElementById('edit-form').action = `/officer/compound/${c.id}`;
- 
-    new bootstrap.Modal(document.getElementById('viewModal')).show();
+// ── Edit modal ────────────────────────────────────────────────────────────────
+function openEdit(id, ref, plate, offenceId, status) {
+    document.getElementById('edit-ref').textContent    = ref;
+    document.getElementById('edit-id').value           = id;
+    document.getElementById('edit-plate').value        = plate;
+    document.getElementById('edit-offence').value      = offenceId;
+    document.getElementById('edit-status').value       = status;
 }
  
-// ── Delete compound ───────────────────────────────────────────────────────────
-function confirmDelete(id, ref) {
-    document.getElementById('delete-ref').textContent  = ref;
-    document.getElementById('delete-form').action      = `/officer/compound/${id}`;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+// ── Delete modal ──────────────────────────────────────────────────────────────
+function openDelete(id, ref) {
+    document.getElementById('delete-ref').textContent = ref;
+    document.getElementById('delete-id').value        = id;
 }
 </script>
 @endsection

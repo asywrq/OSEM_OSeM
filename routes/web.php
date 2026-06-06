@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\VehicleController;
-
+use App\Http\Controllers\Officer\OfficerController;
 
 // Redirect root to dashboard if logged in, else login
 Route::get('/', function () {
@@ -29,13 +28,18 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Officer only
-Route::middleware(['role:officer'])->prefix('officer')->name('officer.')->group(function () {
-    Route::get('/vehicle-applications', [VehicleController::class, 'applications'])->name('vehicle-applications');
-    Route::patch('/vehicle-applications/{vehicle}/approve', [VehicleController::class, 'approveApplication'])->name('vehicle-applications.approve');
-    Route::patch('/vehicle-applications/{vehicle}/reject', [VehicleController::class, 'rejectApplication'])->name('vehicle-applications.reject');
-    Route::get('/appeal-reviews', function () { return view('officer.appeal-reviews'); })->name('appeal-reviews');
-    Route::get('/issue-compound', function () { return view('officer.issue-compound'); })->name('issue-compound');
-});
+    Route::middleware(['role:officer'])->prefix('officer')->name('officer.')->group(function () {
+        Route::get('/vehicle-applications', function () { return view('officer.vehicle-applications'); })->name('vehicle-applications');
+
+        // Appeal Reviews
+        Route::get('/appeal-reviews', [OfficerController::class, 'appealReviews'])->name('appeal-reviews');
+        Route::patch('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
+
+        // Issue Compound
+        Route::get('/issue-compound', [OfficerController::class, 'issueCompound'])->name('issue-compound');
+        Route::post('/compound/lookup', [OfficerController::class, 'lookupPlate'])->name('compound.lookup');
+        Route::post('/compound/store', [OfficerController::class, 'storeCompound'])->name('compound.store');
+    });
 
     // User only
     Route::middleware(['role:user'])->prefix('user')->name('user.')->group(function () {
@@ -44,7 +48,7 @@ Route::middleware(['role:officer'])->prefix('officer')->name('officer.')->group(
         Route::get('/appeal', function () { return view('user.appeal'); })->name('appeal');
     });
 
-        // Disable public registration
+    // Disable public registration
     Route::get('/register', function () {
         return redirect()->route('login');
     });

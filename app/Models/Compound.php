@@ -16,6 +16,12 @@ class Compound extends Model
         'paid_at',
     ];
 
+    protected $casts = [
+        'issued_at'     => 'datetime',
+        'paid_at'       => 'datetime',
+        'is_discounted' => 'boolean',
+    ];
+
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);

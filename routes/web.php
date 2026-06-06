@@ -38,4 +38,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/appeal', function () { return view('user.appeal'); })->name('appeal');
     });
 
+        // Disable public registration
+    Route::get('/register', function () {
+        return redirect()->route('login');
+    });
+
+    Route::post('/register', function () {
+        return redirect()->route('login');
+    });
+
 });

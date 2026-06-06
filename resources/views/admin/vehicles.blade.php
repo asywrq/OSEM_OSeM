@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid p-0">
-    <h1 class="h3 mb-3"><strong>All Registered Vehicles</strong></h1>
+    <h1 class="h3 mb-3"><strong>All Vehicles</strong></h1>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -30,11 +30,9 @@
                     <option value="rejected">Rejected</option>
                 </select>
 
-                <input type="text" class="form-control form-control-sm w-auto" id="searchPlate" placeholder="Search Plate Number...">
+<input type="text" class="form-control form-control-sm" id="searchPlate" placeholder="Search Plate Number..." style="max-width: 300px;">
 
-                <a href="{{ route('admin.vehicles') }}" class="btn btn-sm btn-warning ms-auto text-dark fw-semibold">
-                    + Add New Offence
-                </a>
+      
             </div>
 
             {{-- Table --}}
@@ -47,7 +45,7 @@
                         <th>Matric/Staff No.</th>
                         <th>Reason</th>
                         <th>Status</th>
-                        <th>Active</th>
+                        <th>Applied Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

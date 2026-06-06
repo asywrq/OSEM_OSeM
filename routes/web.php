@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Officer\OfficerController;
+use App\Http\Controllers\VehicleController;
+
 
 // Redirect root to dashboard if logged in, else login
 Route::get('/', function () {
@@ -29,12 +31,15 @@ Route::middleware(['auth'])->group(function () {
 
     // Officer only
     Route::middleware(['role:officer'])->prefix('officer')->name('officer.')->group(function () {
-        Route::get('/vehicle-applications', function () { return view('officer.vehicle-applications'); })->name('vehicle-applications');
 
         // Appeal Reviews
         Route::get('/appeal-reviews', [OfficerController::class, 'appealReviews'])->name('appeal-reviews');
         Route::patch('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
 
+        // Vehicle Applications
+        Route::get('/vehicle-applications', [VehicleController::class, 'applications'])->name('vehicle-applications');
+        Route::patch('/vehicle-applications/{vehicle}/approve', [VehicleController::class, 'approveApplication'])->name('vehicle-applications.approve');
+        Route::patch('/vehicle-applications/{vehicle}/reject', [VehicleController::class, 'rejectApplication'])->name('vehicle-applications.reject');
         // Issue Compound
         Route::get('/issue-compound', [OfficerController::class, 'issueCompound'])->name('issue-compound');
         Route::post('/compound/lookup', [OfficerController::class, 'lookupPlate'])->name('compound.lookup');

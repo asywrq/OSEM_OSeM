@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Officer\OfficerController;
 
 // Redirect root to dashboard if logged in, else login
 Route::get('/', function () {
@@ -27,8 +28,15 @@ Route::middleware(['auth'])->group(function () {
     // Officer only
     Route::middleware(['role:officer'])->prefix('officer')->name('officer.')->group(function () {
         Route::get('/vehicle-applications', function () { return view('officer.vehicle-applications'); })->name('vehicle-applications');
-        Route::get('/appeal-reviews', function () { return view('officer.appeal-reviews'); })->name('appeal-reviews');
-        Route::get('/issue-compound', function () { return view('officer.issue-compound'); })->name('issue-compound');
+
+        // Appeal Reviews
+        Route::get('/appeal-reviews', [OfficerController::class, 'appealReviews'])->name('appeal-reviews');
+        Route::patch('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
+
+        // Issue Compound
+        Route::get('/issue-compound', [OfficerController::class, 'issueCompound'])->name('issue-compound');
+        Route::post('/compound/lookup', [OfficerController::class, 'lookupPlate'])->name('compound.lookup');
+        Route::post('/compound/store', [OfficerController::class, 'storeCompound'])->name('compound.store');
     });
 
     // User only
@@ -38,7 +46,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/appeal', function () { return view('user.appeal'); })->name('appeal');
     });
 
-        // Disable public registration
+    // Disable public registration
     Route::get('/register', function () {
         return redirect()->route('login');
     });

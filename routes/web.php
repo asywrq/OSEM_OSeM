@@ -24,7 +24,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', function () { return view('admin.users'); })->name('users');
         Route::get('/offences', function () { return view('admin.offences'); })->name('offences');
-        Route::get('/vehicles', function () { return view('admin.vehicles'); })->name('vehicles');
+        Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles');
+        Route::patch('/vehicles/{vehicle}/approve', [VehicleController::class, 'approve'])->name('vehicles.approve');
+        Route::patch('/vehicles/{vehicle}/reject', [VehicleController::class, 'reject'])->name('vehicles.reject');
     });
  
     // Officer only

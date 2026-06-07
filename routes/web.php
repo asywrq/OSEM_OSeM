@@ -5,6 +5,7 @@ use App\Http\Controllers\Officer\OfficerController;
 use App\Http\Controllers\User\MyVehicleController;
 use App\Http\Controllers\User\MyCompoundController;
 use App\Http\Controllers\User\AppealController;
+use App\Http\Controllers\VehicleController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -28,9 +29,13 @@ Route::middleware(['auth'])->group(function () {
  
     // Officer only
     Route::middleware(['role:officer'])->prefix('officer')->name('officer.')->group(function () {
-        Route::get('/vehicle-applications', function () { return view('officer.vehicle-applications'); })->name('vehicle-applications');
- 
-        // Appeal Reviews
+    
+        //Vehicle Applications
+         Route::get('/vehicle-applications', [VehicleController::class, 'applications'])->name('vehicle-applications');
+         Route::patch('/vehicle-applications/{vehicle}/approve', [VehicleController::class, 'approveApplication'])->name('vehicle-applications.approve');
+         Route::patch('/vehicle-applications/{vehicle}/reject', [VehicleController::class, 'rejectApplication'])->name('vehicle-applications.reject');    
+       
+         // Appeal Reviews
         Route::get('/appeal-reviews', [OfficerController::class, 'appealReviews'])->name('appeal-reviews');
         Route::post('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
  

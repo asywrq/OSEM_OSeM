@@ -27,6 +27,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles');
         Route::patch('/vehicles/{vehicle}/approve', [VehicleController::class, 'approve'])->name('vehicles.approve');
         Route::patch('/vehicles/{vehicle}/reject', [VehicleController::class, 'reject'])->name('vehicles.reject');
+        Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
     });
  
     // Officer only

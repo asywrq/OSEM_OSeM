@@ -50,4 +50,22 @@ public function rejectApplication(Vehicle $vehicle)
 
     return back()->with('success', "Vehicle {$vehicle->plate_no} has been rejected.");
 }
+public function update(Request $request, Vehicle $vehicle)
+{
+    $vehicle->update([
+        'plate_no' => $request->plate_no,
+        'type'     => $request->type,
+        'reason'   => $request->reason,
+        'status'   => $request->status,
+    ]);
+
+    return back()->with('success', "Vehicle {$vehicle->plate_no} has been updated.");
+}
+
+public function destroy(Vehicle $vehicle)
+{
+    $vehicle->delete();
+
+    return back()->with('success', 'Vehicle has been deleted.');
+}
 }

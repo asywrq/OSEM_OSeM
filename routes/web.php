@@ -2,7 +2,10 @@
  
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Officer\OfficerController;
- 
+use App\Http\Controllers\User\MyVehicleController;
+use App\Http\Controllers\User\MyCompoundController;
+use App\Http\Controllers\User\AppealController;
+
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
@@ -41,11 +44,18 @@ Route::middleware(['auth'])->group(function () {
     });
  
     // User only
-    Route::middleware(['role:user'])->prefix('user')->name('user.')->group(function () {
-        Route::get('/my-vehicle', function () { return view('user.my-vehicle'); })->name('my-vehicle');
-        Route::get('/my-compounds', function () { return view('user.my-compounds'); })->name('my-compounds');
-        Route::get('/appeal', function () { return view('user.appeal'); })->name('appeal');
-    });
+   Route::middleware(['role:user'])->prefix('user')->name('user.')->group(function () {
+    Route::get('/my-vehicle', [MyVehicleController::class, 'index'])->name('my-vehicle');
+    Route::post('/my-vehicle', [MyVehicleController::class, 'store'])->name('my-vehicle.store');
+    Route::get('/my-compounds', [MyCompoundController::class, 'index'])->name('my-compounds');
+  Route::get('/appeal', function () {
+    return redirect()->route('user.my-compounds');
+})->name('appeal');
+
+Route::get('/appeal/{compound}', [AppealController::class, 'show'])->name('appeal.show');
+Route::post('/appeal/{compound}', [AppealController::class, 'store'])->name('appeal.store');
+});
+    
  
     Route::get('/register', function () { return redirect()->route('login'); });
     Route::post('/register', function () { return redirect()->route('login'); });

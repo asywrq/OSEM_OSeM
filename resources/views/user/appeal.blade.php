@@ -11,12 +11,19 @@
                 </div>
                 <div class="card-body">
 
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
+
                     <table class="table table-sm mb-3">
-                        <tr><th>Ref</th><td>—</td></tr>
-                        <tr><th>Plate No.</th><td>—</td></tr>
-                        <tr><th>Offence</th><td>—</td></tr>
-                        <tr><th>Amount</th><td>—</td></tr>
-                        <tr><th>Issued</th><td>—</td></tr>
+                        <tr><th>Ref</th><td>#{{ $compound->id }}</td></tr>
+                        <tr><th>Plate No.</th><td>{{ $compound->vehicle->plate_no }}</td></tr>
+                        <tr><th>Offence</th><td>{{ $compound->offenceType->name }}</td></tr>
+                        <tr><th>Amount</th><td>RM {{ number_format($compound->offenceType->amount, 2) }}</td></tr>
+                        <tr><th>Issued</th><td>{{ $compound->issued_at->format('d M Y') }}</td></tr>
                     </table>
 
                     <div class="alert alert-warning">
@@ -26,13 +33,21 @@
                         before end of semester examinations.
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Reason for Appeal</label>
-                        <textarea class="form-control" rows="4" placeholder="Explain why you are appealing this compound..."></textarea>
-                    </div>
+                    <form action="{{ route('user.appeal.store', $compound) }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Reason for Appeal</label>
+                            <textarea class="form-control" name="reason" rows="4"
+                                      placeholder="Explain why you are appealing this compound..."
+                                      required>{{ old('reason') }}</textarea>
+                            @error('reason')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                    <button class="btn btn-primary me-2">Submit Appeal</button>
-                    <a href="{{ route('user.my-compounds') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary me-2">Submit Appeal</button>
+                        <a href="{{ route('user.my-compounds') }}" class="btn btn-secondary">Cancel</a>
+                    </form>
 
                 </div>
             </div>

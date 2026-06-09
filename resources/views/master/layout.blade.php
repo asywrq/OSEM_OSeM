@@ -8,6 +8,7 @@
     <title>OSEM – Office of Security Management</title>
     <link href="{{ asset('static/css/app.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <style>
         /* Sidebar background */
         .sidebar,

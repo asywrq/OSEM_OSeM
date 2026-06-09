@@ -11,11 +11,12 @@
         </div>
     @endif
 
-    <div class="card">
+    {{-- Filters Card --}}
+    <div class="card mb-3">
         <div class="card-body">
-
-            {{-- Filters Row --}}
-            <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted fw-semibold me-2">Filter Vehicles</span>
+                
                 <select class="form-select form-select-sm w-auto" id="filterType">
                     <option value="">All Types</option>
                     <option value="car">Car</option>
@@ -30,36 +31,55 @@
                     <option value="rejected">Rejected</option>
                 </select>
 
-                <input type="text" class="form-control form-control-sm" id="searchPlate" placeholder="Search Plate Number..." style="max-width: 300px;">
+                <input type="text" class="form-control form-control-sm" id="searchVehicle" 
+                    placeholder="Search plate or matric no..." style="max-width: 300px;">
             </div>
+        </div>
+    </div>
 
-            {{-- Table --}}
-            <table class="table table-hover align-middle" id="vehiclesTable">
-                <thead>
+    {{-- Table Card --}}
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0" id="vehiclesTable">
+                <thead class="table-light">
                     <tr>
-                        <th>Plate No.</th>
+                        <th class="ps-4">Plate No.</th>
                         <th>Type</th>
                         <th>Owner Name</th>
                         <th>Matric/Staff No.</th>
                         <th>Reason</th>
                         <th>Applied Date</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th class="pe-4 text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($vehicles as $vehicle)
                         <tr
+                            class="vehicle-row"
                             data-type="{{ $vehicle->type }}"
                             data-status="{{ $vehicle->status }}"
                             data-plate="{{ strtolower($vehicle->plate_no) }}"
+                            data-matric="{{ strtolower($vehicle->user->matric_or_staff_no ?? '') }}"
                         >
-                            <td><code>{{ strtoupper($vehicle->plate_no) }}</code></td>
+                            <td class="ps-4">
+                                <span class="fw-bold font-monospace text-dark">{{ strtoupper($vehicle->plate_no) }}</span>
+                            </td>
                             <td>{{ ucfirst($vehicle->type) }}</td>
                             <td>{{ $vehicle->user->name }}</td>
-                            <td>{{ $vehicle->user->matric_no ?? $vehicle->user->staff_no ?? '—' }}</td>
-                            <td>{{ $vehicle->reason }}</td>
-                            <td>{{ $vehicle->created_at->format('d M Y') }}</td>
+                            <td>
+                                @if($vehicle->user->matric_or_staff_no)
+                                    {{ $vehicle->user->matric_or_staff_no }}
+                                @else
+                                    <span class="badge bg-secondary">External</span>
+                                @endif
+                            </td>
+                            <td style="max-width: 200px;">
+                                <span class="d-inline-block text-truncate" style="max-width: 180px; cursor: help;" title="{{ $vehicle->reason }}">
+                                    {{ $vehicle->reason }}
+                                </span>
+                            </td>
+                            <td>{{ $vehicle->created_at->format('d/m/Y') }}</td>
                             <td>
                                 @if($vehicle->status === 'approved')
                                     <span class="badge bg-success">Approved</span>
@@ -69,51 +89,53 @@
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 @endif
                             </td>
-                            <td>
-                                {{-- Approve / Reject --}}
-                                @if($vehicle->status === 'pending')
-                                    <form action="{{ route('admin.vehicles.approve', $vehicle) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                                    </form>
-                                    <form action="{{ route('admin.vehicles.reject', $vehicle) }}" method="POST" class="d-inline ms-1">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
-                                    </form>
-                                @endif
+                            <td class="pe-4 text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    {{-- Approve / Reject --}}
+                                    @if($vehicle->status === 'pending')
+                                        <form action="{{ route('admin.vehicles.approve', $vehicle) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-outline-success">Approve</button>
+                                        </form>
+                                        <form action="{{ route('admin.vehicles.reject', $vehicle) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                        </form>
+                                    @endif
 
-                                {{-- Edit Button --}}
-                                <button
-                                    class="btn btn-sm btn-warning ms-1"
-                                    onclick="openEditModal(
-                                        {{ $vehicle->id }},
-                                        '{{ $vehicle->plate_no }}',
-                                        '{{ $vehicle->type }}',
-                                        '{{ $vehicle->status }}',
-                                        '{{ addslashes($vehicle->reason) }}'
-                                    )"
-                                >Edit</button>
+                                    {{-- Edit Button --}}
+                                    <button
+                                        class="btn btn-sm btn-outline-warning"
+                                        onclick="openEditModal(
+                                            {{ $vehicle->id }},
+                                            '{{ $vehicle->plate_no }}',
+                                            '{{ $vehicle->type }}',
+                                            '{{ $vehicle->status }}',
+                                            '{{ addslashes($vehicle->reason) }}'
+                                        )"
+                                    >Edit</button>
 
-                                {{-- Delete Button --}}
-                                <form action="{{ route('admin.vehicles.destroy', $vehicle) }}" method="POST" class="d-inline ms-1" onsubmit="return confirmDelete()">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
+                                    {{-- Delete Button --}}
+                                    <form action="{{ route('admin.vehicles.destroy', $vehicle) }}" method="POST" class="d-inline" onsubmit="return confirmDelete()">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-3">No vehicles found.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No vehicles found.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
 
-            <div id="noResults" class="text-center text-muted py-3" style="display:none;">
-                No vehicles match your search.
+            <div id="noResults" class="text-center text-muted py-4" style="display:none;">
+                No vehicles match your search criteria.
             </div>
 
         </div>
@@ -133,11 +155,11 @@
                 @method('PATCH')
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Plate No.</label>
-                        <input type="text" class="form-control" name="plate_no" id="editPlate" required>
+                        <label class="form-label fw-semibold">Plate No.</label>
+                        <input type="text" class="form-control text-uppercase font-monospace" name="plate_no" id="editPlate" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Type</label>
+                        <label class="form-label fw-semibold">Type</label>
                         <select class="form-select" name="type" id="editType">
                             <option value="car">Car</option>
                             <option value="motorcycle">Motorcycle</option>
@@ -145,11 +167,11 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Reason</label>
+                        <label class="form-label fw-semibold">Reason</label>
                         <textarea class="form-control" name="reason" id="editReason" rows="3" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Status</label>
+                        <label class="form-label fw-semibold">Status</label>
                         <select class="form-select" name="status" id="editStatus">
                             <option value="pending">Pending</option>
                             <option value="approved">Approved</option>
@@ -167,38 +189,45 @@
 </div>
 
 <script>
-    // Filters
-    const typeFilter   = document.getElementById('filterType');
-    const statusFilter = document.getElementById('filterStatus');
-    const searchInput  = document.getElementById('searchPlate');
-    const rows         = document.querySelectorAll('#vehiclesTable tbody tr[data-plate]');
-    const noResults    = document.getElementById('noResults');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filters
+        const typeFilter   = document.getElementById('filterType');
+        const statusFilter = document.getElementById('filterStatus');
+        const searchInput  = document.getElementById('searchVehicle');
+        const rows         = document.querySelectorAll('.vehicle-row');
+        const noResults    = document.getElementById('noResults');
 
-    function applyFilters() {
-        const type   = typeFilter.value.toLowerCase();
-        const status = statusFilter.value.toLowerCase();
-        const plate  = searchInput.value.toLowerCase();
-        let visible  = 0;
+        function applyFilters() {
+            const type   = typeFilter.value.toLowerCase();
+            const status = statusFilter.value.toLowerCase();
+            const query  = searchInput.value.toLowerCase().trim();
+            let visible  = 0;
 
-        rows.forEach(row => {
-            const matchType   = !type   || row.dataset.type   === type;
-            const matchStatus = !status || row.dataset.status === status;
-            const matchPlate  = !plate  || row.dataset.plate.includes(plate);
+            rows.forEach(row => {
+                const matchType   = !type   || row.dataset.type === type;
+                const matchStatus = !status || row.dataset.status === status;
+                
+                const plateVal = row.dataset.plate || "";
+                const matricVal = row.dataset.matric || "";
+                const matchSearch = !query || plateVal.includes(query) || matricVal.includes(query);
 
-            if (matchType && matchStatus && matchPlate) {
-                row.style.display = '';
-                visible++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
+                if (matchType && matchStatus && matchSearch) {
+                    row.style.display = '';
+                    visible++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
 
-        noResults.style.display = visible === 0 ? 'block' : 'none';
-    }
+            noResults.style.display = visible === 0 ? 'block' : 'none';
+        }
 
-    typeFilter.addEventListener('change', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-    searchInput.addEventListener('input', applyFilters);
+        if(typeFilter && statusFilter && searchInput) {
+            typeFilter.addEventListener('change', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            searchInput.addEventListener('input', applyFilters);
+        }
+    });
 
     // Edit Modal
     function openEditModal(id, plate, type, status, reason) {

@@ -25,6 +25,21 @@
     </div>
     @endif
 
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select class="form-select form-select-sm w-auto" id="filterRole">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="officer">Officer</option>
+                    <option value="user">User</option>
+                </select>
+
+                <input type="text" class="form-control form-control-sm" id="searchUser" placeholder="Search Name or Matric Number..." style="max-width: 300px;">
+            </div>
+        </div>
+    </div>
+
     {{-- Table --}}
     <div class="card">
         <div class="card-body">
@@ -40,7 +55,7 @@
                 </thead>
                 <tbody>
                     @forelse($users as $user)
-                    <tr>
+                    <tr class="user-row" data-name="{{ $user->name }}" data-matric="{{ $user->matric_or_staff_no ?? '' }}" data-role="{{ $user->role }}">
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->matric_or_staff_no ?? '—' }}</td>
                         <td>
@@ -248,6 +263,35 @@
                 document.getElementById('edit_role').value = role;
                 document.getElementById('edit_active').value = active;
             });
+        }
+
+        const searchInput = document.getElementById('searchUser');
+        const roleSelect = document.getElementById('filterRole');
+        const tableRows = document.querySelectorAll('.user-row');
+
+        function filterTable() {
+            const searchText = searchInput.value.toLowerCase().trim();
+            const selectedRole = roleSelect.value.toLowerCase();
+
+            tableRows.forEach(row => {
+                const name = row.getAttribute('data-name').toLowerCase();
+                const matric = row.getAttribute('data-matric').toLowerCase();
+                const role = row.getAttribute('data-role').toLowerCase();
+
+                const matchesSearch = name.includes(searchText) || matric.includes(searchText);
+                const matchesRole = selectedRole === '' || role === selectedRole;
+
+                if (matchesSearch && matchesRole) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        if (searchInput && roleSelect) {
+            searchInput.addEventListener('input', filterTable);
+            roleSelect.addEventListener('change', filterTable);
         }
     });
 </script>

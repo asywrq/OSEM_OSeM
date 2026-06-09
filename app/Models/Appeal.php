@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Appeal extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'compound_id',
         'reviewed_by',

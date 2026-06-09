@@ -57,7 +57,13 @@
                             {{-- Edit Button --}}
                             <button class="btn btn-sm btn-outline-primary"
                                 data-bs-toggle="modal"
-                                data-bs-target="#editUserModal{{ $user->id }}">
+                                data-bs-target="#editUserModal"
+                                data-id="{{ $user->id }}"
+                                data-name="{{ $user->name }}"
+                                data-matric="{{ $user->matric_or_staff_no }}"
+                                data-email="{{ $user->email }}"
+                                data-role="{{ $user->role }}"
+                                data-active="{{ $user->is_active ? '1' : '0' }}">
                                 Edit
                             </button>
 
@@ -73,67 +79,6 @@
                         </td>
                     </tr>
 
-                    {{-- Edit Modal --}}
-                    <div class="modal fade" id="editUserModal{{ $user->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <form method="POST" action="{{ route('admin.users.update', $user->id) }}">
-                                    @csrf
-                                    @method('PATCH')
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Edit User</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="name" class="form-control"
-                                                value="{{ $user->name }}" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Matric / Staff No.</label>
-                                            <input type="text" name="matric_or_staff_no" class="form-control"
-                                                value="{{ $user->matric_or_staff_no }}">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Email <span class="text-danger">*</span></label>
-                                            <input type="email" name="email" class="form-control"
-                                                value="{{ $user->email }}" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
-                                            <input type="password" name="password" class="form-control">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Confirm Password</label>
-                                            <input type="password" name="password_confirmation" class="form-control">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Role <span class="text-danger">*</span></label>
-                                            <select name="role" class="form-select" required>
-                                                <option value="admin" {{ $user->role === 'admin'   ? 'selected' : '' }}>Admin</option>
-                                                <option value="officer" {{ $user->role === 'officer' ? 'selected' : '' }}>Officer</option>
-                                                <option value="user" {{ $user->role === 'user'    ? 'selected' : '' }}>User</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Status</label>
-                                            <select name="is_active" class="form-select">
-                                                <option value="1" {{ $user->is_active  ? 'selected' : '' }}>Active</option>
-                                                <option value="0" {{ !$user->is_active ? 'selected' : '' }}>Inactive</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Update User</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    {{-- End Edit Modal --}}
-
                     @empty
                     <tr>
                         <td colspan="5" class="text-center text-muted">No users found.</td>
@@ -144,6 +89,64 @@
         </div>
     </div>
 </div>
+
+{{-- Edit Modal --}}
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editUserForm" action="">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Matric / Staff No.</label>
+                        <input type="text" name="matric_or_staff_no" id="edit_matric" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" id="edit_email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
+                        <input type="password" name="password" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" name="password_confirmation" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role <span class="text-danger">*</span></label>
+                        <select name="role" id="edit_role" class="form-select" required>
+                            <option value="admin">Admin</option>
+                            <option value="officer">Officer</option>
+                            <option value="user">User</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="is_active" id="edit_active" class="form-select">
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{-- End Edit Modal --}}
 
 {{-- Add User Modal --}}
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
@@ -220,6 +223,34 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editUserModal = document.getElementById('editUserModal');
+        if (editUserModal) {
+            editUserModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                
+                const id = button.getAttribute('data-id');
+                const name = button.getAttribute('data-name');
+                const matric = button.getAttribute('data-matric');
+                const email = button.getAttribute('data-email');
+                const role = button.getAttribute('data-role');
+                const active = button.getAttribute('data-active');
+                
+                const form = document.getElementById('editUserForm');
+                const baseRoute = "{{ route('admin.users.update', 'ROUTE_ID') }}";
+                form.action = baseRoute.replace('ROUTE_ID', id);
+                
+                document.getElementById('edit_name').value = name;
+                document.getElementById('edit_matric').value = matric ?? '';
+                document.getElementById('edit_email').value = email;
+                document.getElementById('edit_role').value = role;
+                document.getElementById('edit_active').value = active;
+            });
+        }
+    });
+</script>
 
 {{-- Re-open add modal if validation failed --}}
 @if($errors->any())

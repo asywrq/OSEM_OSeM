@@ -44,7 +44,10 @@
                         <td>
                             <button class="btn btn-sm btn-outline-primary"
                                 data-bs-toggle="modal"
-                                data-bs-target="#editOffenceModal{{ $offence->id }}">
+                                data-bs-target="#editOffenceModal"
+                                data-id="{{ $offence->id }}"
+                                data-name="{{ $offence->name }}"
+                                data-amount="{{ $offence->amount }}">
                                 Edit
                             </button>
                             <form method="POST"
@@ -57,39 +60,6 @@
                             </form>
                         </td>
                     </tr>
-
-                    {{-- Edit Modal (per row) --}}
-                    <div class="modal fade" id="editOffenceModal{{ $offence->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <form method="POST" action="{{ route('admin.offences.update', $offence->id) }}">
-                                    @csrf
-                                    @method('PATCH')
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Edit Offence Type</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label">Offence Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="name" class="form-control"
-                                                value="{{ $offence->name }}" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Amount (RM) <span class="text-danger">*</span></label>
-                                            <input type="number" name="amount" class="form-control"
-                                                value="{{ $offence->amount }}" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Update</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
                     @empty
                     <tr>
                         <td colspan="3" class="text-center text-muted">No offence types found.</td>
@@ -97,6 +67,36 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+{{-- Edit Modal (per row) --}}
+<div class="modal fade" id="editOffenceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editOffenceForm" action="">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Offence Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Offence Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit_offence_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount (RM) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" id="edit_offence_amount" class="form-control" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -145,6 +145,28 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editOffenceModal = document.getElementById('editOffenceModal');
+        if (editOffenceModal) {
+            editOffenceModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                
+                const id = button.getAttribute('data-id');
+                const name = button.getAttribute('data-name');
+                const amount = button.getAttribute('data-amount');
+                
+                const form = document.getElementById('editOffenceForm');
+                const baseRoute = "{{ route('admin.offences.update', 'ROUTE_ID') }}";
+                form.action = baseRoute.replace('ROUTE_ID', id);
+                
+                document.getElementById('edit_offence_name').value = name;
+                document.getElementById('edit_offence_amount').value = amount;
+            });
+        }
+    });
+</script>
 
 {{-- Re-open add modal if validation failed --}}
 @if($errors->any())

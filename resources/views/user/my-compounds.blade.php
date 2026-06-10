@@ -46,28 +46,35 @@
                             <td>
                                 @php
                                     $badge = match($compound->status) {
-                                        'paid'      => 'secondary',
-                                        'resolved'  => 'success',
+                                        'paid'      => 'success',
+                                        'resolved'  => 'secondary',
                                         'appealing' => 'info',
                                         default     => 'danger',
                                     };
                                 @endphp
                                 <span class="badge bg-{{ $badge }}">{{ ucfirst($compound->status) }}</span>
                             </td>
-                            <td>
-                                @if($compound->status === 'unpaid' && !$compound->appeal)
-                                    <a href="{{ route('user.appeal.show', $compound) }}"
-                                       class="btn btn-sm btn-warning">
-                                        Appeal
-                                    </a>
-                                @elseif($compound->appeal)
-                                    <span class="text-muted" style="font-size:0.85rem;">
-                                        Appeal {{ ucfirst($compound->appeal->result) }}
-                                    </span>
-                                @else
-                                    —
-                                @endif
-                            </td>
+                                <td>
+                                    @if($compound->status === 'unpaid' && !$compound->appeal)
+                                        <a href="{{ route('user.appeal.show', $compound) }}"
+                                        class="btn btn-sm btn-primary">Appeal</a>
+
+                                    @elseif($compound->status === 'unpaid' && $compound->appeal?->result === 'rejected')
+                                        <span class="badge bg-danger">Appeal Rejected</span>
+
+                                    @elseif($compound->status === 'resolved')
+                                        <span class="badge bg-secondary">Pay at Counter</span>
+
+                                    @elseif($compound->status === 'appealing')
+                                        <span class="text-muted" style="font-size:0.85rem;">⏳ Awaiting Review</span>
+
+                                    @elseif($compound->status === 'paid')
+                                        <span class="text-success" style="font-size:0.85rem;">✓ Paid</span>
+
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                         </tr>
                     @empty
                         <tr>

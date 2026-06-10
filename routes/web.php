@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Appeal Reviews
         Route::get('/appeal-reviews', [OfficerController::class, 'appealReviews'])->name('appeal-reviews');
-        Route::post('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
+        Route::patch('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
 
         // Issue Compound
         Route::get('/issue-compound', [OfficerController::class, 'issueCompound'])->name('issue-compound');

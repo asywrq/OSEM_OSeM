@@ -122,7 +122,7 @@
                     <li class="sidebar-item {{ request()->routeIs('officer.vehicle-applications') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('officer.vehicle-applications') }}">
                             <i class="align-middle" data-feather="check-square"></i>
-                            <span class="align-middle">Vehicle Applications</span>
+                            <span class="align-middle">Sticker Applications</span>
                         </a>
                     </li>
                     <li class="sidebar-item {{ request()->routeIs('officer.appeal-reviews') ? 'active' : '' }}">

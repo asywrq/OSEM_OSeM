@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid p-0">
-    <h1 class="h3 mb-3"><strong>Vehicle Applications</strong></h1>
+    <h1 class="h3 mb-3"><strong>Sticker Applications</strong></h1>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">

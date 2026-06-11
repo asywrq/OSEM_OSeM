@@ -49,7 +49,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 
         // Appeal Reviews
         Route::get('/appeal-reviews', [OfficerController::class, 'appealReviews'])->name('appeal-reviews');
-        Route::patch('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
+        Route::post('/appeal/{appeal}', [OfficerController::class, 'updateAppeal'])->name('appeal.update');
 
         // Issue Compound
         Route::get('/issue-compound', [OfficerController::class, 'issueCompound'])->name('issue-compound');
@@ -65,6 +65,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
         Route::get('/my-vehicle', [MyVehicleController::class, 'index'])->name('my-vehicle');
         Route::post('/my-vehicle', [MyVehicleController::class, 'store'])->name('my-vehicle.store');
         Route::get('/my-compounds', [MyCompoundController::class, 'index'])->name('my-compounds');
+        Route::post('/pay/{compound}', [MyCompoundController::class, 'pay'])->name('my-compounds.pay');
         Route::get('/appeal', function () {
             return redirect()->route('user.my-compounds');
         })->name('appeal');

@@ -54,27 +54,50 @@
                                 @endphp
                                 <span class="badge bg-{{ $badge }}">{{ ucfirst($compound->status) }}</span>
                             </td>
-                                <td>
-                                    @if($compound->status === 'unpaid' && !$compound->appeal)
-                                        <a href="{{ route('user.appeal.show', $compound) }}"
-                                        class="btn btn-sm btn-primary">Appeal</a>
+                            <td>
+                                @if($compound->status === 'unpaid' && !$compound->appeal)
+                                    {{-- No appeal yet: can appeal OR pay --}}
+                                    <a href="{{ route('user.appeal.show', $compound) }}"
+                                       class="btn btn-sm btn-primary">Appeal</a>
+                                    <form action="{{ route('user.my-compounds.pay', $compound) }}" method="POST" class="d-inline ms-1">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success"
+                                            onclick="return confirm('Confirm payment of RM {{ number_format($compound->offenceType->amount, 2) }} for this compound?')">
+                                            Pay
+                                        </button>
+                                    </form>
 
-                                    @elseif($compound->status === 'unpaid' && $compound->appeal?->result === 'rejected')
-                                        <span class="badge bg-danger">Appeal Rejected</span>
+                                @elseif($compound->status === 'unpaid' && $compound->appeal?->result === 'rejected')
+                                    {{-- Appeal rejected: must pay full amount --}}
+                                    <span class="badge bg-danger me-1">Appeal Rejected</span>
+                                    <form action="{{ route('user.my-compounds.pay', $compound) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success"
+                                            onclick="return confirm('Confirm payment of RM {{ number_format($compound->offenceType->amount, 2) }} for this compound?')">
+                                            Pay
+                                        </button>
+                                    </form>
 
-                                    @elseif($compound->status === 'resolved')
-                                        <span class="badge bg-secondary">Pay at Counter</span>
+                                @elseif($compound->status === 'resolved')
+                                    {{-- Appeal approved (discounted): pay discounted amount --}}
+                                    <form action="{{ route('user.my-compounds.pay', $compound) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success"
+                                            onclick="return confirm('Confirm payment of RM {{ number_format($compound->offenceType->amount * 0.5, 2) }} (50% off) for this compound?')">
+                                            Pay
+                                        </button>
+                                    </form>
 
-                                    @elseif($compound->status === 'appealing')
-                                        <span class="text-muted" style="font-size:0.85rem;">⏳ Awaiting Review</span>
+                                @elseif($compound->status === 'appealing')
+                                    <span class="text-muted" style="font-size:0.85rem;">⏳ Awaiting Review</span>
 
-                                    @elseif($compound->status === 'paid')
-                                        <span class="text-success" style="font-size:0.85rem;">✓ Paid</span>
+                                @elseif($compound->status === 'paid')
+                                    <span class="text-success" style="font-size:0.85rem;">✓ Paid</span>
 
-                                    @else
-                                        —
-                                    @endif
-                                </td>
+                                @else
+                                    —
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>

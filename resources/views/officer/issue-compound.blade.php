@@ -1,22 +1,8 @@
 @extends('master.layout')
 
 @section('content')
-
-<style>
-    .filter-input { max-width: 170px; }
-    .plate-input-lg { text-transform: uppercase; font-family: monospace; font-size: 18px; }
-    .plate-display { font-family: monospace; font-weight: 600; }
-    .detail-th { width: 130px; }
-</style>
-
 <div class="container-fluid p-0">
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0"><strong>Issue Compound</strong></h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#issueModal">
-            + Issue New Compound
-        </button>
-    </div>
+    <h1 class="h3 mb-3"><strong>Issue Compound</strong></h1>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show">
@@ -34,16 +20,31 @@
 
     {{-- Filter bar --}}
     <div class="card mb-3">
-        <div class="card-body">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="text-muted fw-semibold me-2">Filter Records</span>
-                <input type="text" id="filter-compound" class="form-control form-control-sm filter-input"
-                    placeholder="Compound no..." oninput="filterTable()">
-                <input type="text" id="filter-vehicle" class="form-control form-control-sm filter-input"
-                    placeholder="Vehicle no..." oninput="filterTable()">
-                <input type="date" id="filter-date" class="form-control form-control-sm filter-input"
-                    oninput="filterTable()">
-                <button type="button" class="btn btn-sm btn-secondary ms-auto" onclick="clearFilters()">Clear Filters</button>
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label mb-1 small fw-semibold">Compound No.</label>
+                    <input type="text" id="filter-compound" class="form-control form-control-sm"
+                        placeholder="Enter compound no." style="width:170px" oninput="filterTable()">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label mb-1 small fw-semibold">Vehicle No.</label>
+                    <input type="text" id="filter-vehicle" class="form-control form-control-sm"
+                        placeholder="Enter vehicle no." style="width:170px" oninput="filterTable()">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label mb-1 small fw-semibold">Issue Date</label>
+                    <input type="date" id="filter-date" class="form-control form-control-sm"
+                        style="width:170px" oninput="filterTable()">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary btn-sm px-4" onclick="filterTable()">Search</button>
+                </div>
+                <div class="col-auto ms-auto">
+                    <button class="btn btn-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#issueModal">
+                        + Issue New Compound
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -51,16 +52,17 @@
     {{-- Compounds table --}}
     <div class="card">
         <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0" id="compounds-table">
+            <table class="table table-bordered mb-0" id="compounds-table">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4">COMPOUND NO.</th>
+                        <th class="ps-3" style="width:50px">NO.</th>
+                        <th>COMPOUND NO.</th>
                         <th>VEHICLE NO.</th>
                         <th>OFFENCE TYPE</th>
                         <th>ISSUE DATE</th>
                         <th>AMOUNT (RM)</th>
                         <th>STATUS</th>
-                        <th class="pe-4 text-end">ACTION</th>
+                        <th class="pe-3">ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,8 +71,9 @@
                         data-compound="cmp{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}"
                         data-vehicle="{{ strtolower($compound->vehicle->plate_no) }}"
                         data-date="{{ $compound->issued_at ? $compound->issued_at->format('Y-m-d') : '' }}">
-                        <td class="ps-4"><strong>CMP{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}</strong></td>
-                        <td><span class="plate-display text-dark">{{ strtoupper($compound->vehicle->plate_no) }}</span></td>
+                        <td class="ps-3 text-center">{{ $loop->iteration }}</td>
+                        <td><strong>CMP{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}</strong></td>
+                        <td style="font-family:monospace;font-weight:600;">{{ $compound->vehicle->plate_no }}</td>
                         <td>{{ $compound->offenceType->name }}</td>
                         <td>{{ $compound->issued_at ? $compound->issued_at->format('d/m/Y') : '—' }}</td>
                         <td>
@@ -95,18 +98,18 @@
                             @endphp
                             <span class="badge {{ $cls }}">{{ $label }}</span>
                         </td>
-                        <td class="pe-4 text-end">
-                            <div class="d-flex justify-content-end gap-1">
-                                <button class="btn btn-outline-primary btn-sm px-3"
+                        <td class="pe-3">
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-outline-warning btn-sm"
                                     data-bs-toggle="modal" data-bs-target="#viewModal"
                                     onclick="openEdit(
                                         {{ $compound->id }},
                                         'CMP{{ str_pad($compound->id, 6, '0', STR_PAD_LEFT) }}',
-                                        '{{ strtoupper($compound->vehicle->plate_no) }}',
+                                        '{{ $compound->vehicle->plate_no }}',
                                         {{ $compound->offence_type_id }},
                                         '{{ $compound->status }}'
-                                    )">View</button>
-                                <button class="btn btn-outline-danger btn-sm px-3"
+                                    )">Edit</button>
+                                <button class="btn btn-outline-danger btn-sm"
                                     data-bs-toggle="modal" data-bs-target="#deleteModal"
                                     onclick="openDelete(
                                         {{ $compound->id }},
@@ -117,7 +120,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No compounds issued yet.</td>
+                        <td colspan="8" class="text-center text-muted py-4">No compounds issued yet.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -125,12 +128,15 @@
         </div>
         @if($compounds->count())
         <div class="card-footer text-muted small">
-            Showing {{ $compounds->count() }} entries
+            Showing 1 to {{ $compounds->count() }} of {{ $compounds->count() }} entries
         </div>
         @endif
     </div>
 </div>
 
+{{-- ═══════════════════════════════════════
+     ISSUE NEW COMPOUND MODAL (3-step, no AJAX)
+═══════════════════════════════════════ --}}
 <div class="modal fade" id="issueModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -145,8 +151,9 @@
                     </div>
                     <div class="modal-body">
                         <label class="form-label fw-semibold">Plate No.</label>
-                        <input type="text" name="plate_no" class="form-control plate-input-lg"
+                        <input type="text" name="plate_no" class="form-control"
                             placeholder="e.g. WQR 4421"
+                            style="text-transform:uppercase;font-family:monospace;font-size:18px"
                             value="{{ session('lookup_plate') }}"
                             required>
                         @if(session('lookup_error'))
@@ -178,9 +185,9 @@
                 </div>
                 <div class="modal-body">
                     <table class="table table-sm mb-3">
-                        <tr><th class="detail-th">Plate</th><td class="plate-display">{{ strtoupper($lv['plate']) }}</td></tr>
+                        <tr><th style="width:130px">Plate</th><td style="font-family:monospace;font-weight:600">{{ $lv['plate'] }}</td></tr>
                         <tr><th>Owner</th><td>{{ $lv['owner'] }}</td></tr>
-                        <tr><th>Type</th><td>{{ ucfirst($lv['type']) }}</td></tr>
+                        <tr><th>Type</th><td>{{ $lv['type'] }}</td></tr>
                         <tr><th>Sticker</th><td><span class="badge bg-success">Valid</span></td></tr>
                     </table>
                     <label class="form-label fw-semibold">Select Offence</label>
@@ -215,7 +222,7 @@
                         Please verify the details before issuing. This cannot be undone.
                     </div>
                     <table class="table table-sm mb-0">
-                        <tr><th class="detail-th">Plate</th><td class="plate-display">{{ strtoupper($lv['plate']) }}</td></tr>
+                        <tr><th style="width:130px">Plate</th><td style="font-family:monospace;font-weight:600">{{ $lv['plate'] }}</td></tr>
                         <tr><th>Owner</th><td>{{ $lv['owner'] }}</td></tr>
                         <tr><th>Offence</th><td id="confirm-offence">—</td></tr>
                         <tr><th>Amount</th><td><strong id="confirm-amount">—</strong></td></tr>
@@ -275,7 +282,8 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Vehicle No.</label>
-                        <input type="text" class="form-control text-uppercase font-monospace" name="plate_no" id="edit-plate" required>
+                        <input type="text" class="form-control" name="plate_no" id="edit-plate"
+                            style="text-transform:uppercase;font-family:monospace;" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Offence Type</label>
@@ -330,7 +338,7 @@
 </div>
 
 <script>
-// Table filter
+// ── Table filter ──────────────────────────────────────────────────────────────
 function filterTable() {
     const compound = document.getElementById('filter-compound').value.toLowerCase().replace(/\s/g,'');
     const vehicle  = document.getElementById('filter-vehicle').value.toLowerCase().replace(/\s/g,'');
@@ -344,14 +352,7 @@ function filterTable() {
     });
 }
 
-function clearFilters() {
-    document.getElementById('filter-compound').value = '';
-    document.getElementById('filter-vehicle').value = '';
-    document.getElementById('filter-date').value = '';
-    filterTable();
-}
-
-// Edit modal 
+// ── Edit modal ────────────────────────────────────────────────────────────────
 function openEdit(id, ref, plate, offenceId, status) {
     document.getElementById('edit-ref').textContent    = ref;
     document.getElementById('edit-id').value           = id;
@@ -360,7 +361,7 @@ function openEdit(id, ref, plate, offenceId, status) {
     document.getElementById('edit-status').value       = status;
 }
 
-// Delete modal 
+// ── Delete modal ──────────────────────────────────────────────────────────────
 function openDelete(id, ref) {
     document.getElementById('delete-ref').textContent = ref;
     document.getElementById('delete-id').value        = id;

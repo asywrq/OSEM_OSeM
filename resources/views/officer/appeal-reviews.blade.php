@@ -11,68 +11,59 @@
         </div>
     @endif
 
-    {{-- Filters Card --}}
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="text-muted fw-semibold me-2">Appeal Queue</span>
-                <input type="text" id="appeal-search" class="form-control form-control-sm"
-                    placeholder="Search ID, plate, name, or matric no..."
-                    style="max-width: 380px;">
-            </div>
-        </div>
-    </div>
-
-    {{-- Table Card --}}
     <div class="card">
-        <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0" id="appeals-table">
+        <div class="card-body">
+
+            {{-- Search / Filter bar --}}
+            <div class="d-flex align-items-center mb-3 gap-2">
+                <label class="fw-semibold text-nowrap mb-0">Appeal Queue</label>
+                <input type="text" id="appeal-search" class="form-control"
+                    placeholder="Search compound or user..."
+                    style="max-width: 380px;"
+                    oninput="filterAppeals()">
+            </div>
+
+            <table class="table table-bordered table-hover mb-0" id="appeals-table">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4">Compound ID</th>
+                        <th>Compound ID</th>
                         <th>Plate No.</th>
                         <th>User</th>
-                        <th>Matric/Staff No.</th>
                         <th>Offence</th>
-                        <th>Amount</th>
+                        <th>Full Amount</th>
+                        <th>Discounted Amount</th>
                         <th>Reason</th>
-                        <th class="pe-4 text-end">Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($appeals as $appeal)
                     <tr class="appeal-row"
-                        data-search="{{ strtolower($appeal->compound->vehicle->plate_no . ' ' . $appeal->compound->vehicle->user->name . ' ' . ($appeal->compound->vehicle->user->matric_or_staff_no ?? '') . ' #c-' . str_pad($appeal->compound->id, 4, '0', STR_PAD_LEFT)) }}">
-                        
-                        <td class="ps-4">
+                        data-search="{{ strtolower($appeal->compound->vehicle->plate_no . ' ' . $appeal->compound->vehicle->user->name . ' #C-' . str_pad($appeal->compound->id, 4, '0', STR_PAD_LEFT)) }}">
+                        <td>
                             <strong>#C-{{ str_pad($appeal->compound->id, 4, '0', STR_PAD_LEFT) }}</strong>
                         </td>
                         <td>
-                            <span class="fw-bold font-monospace text-dark">
-                                {{ strtoupper($appeal->compound->vehicle->plate_no) }}
+                            <span style="font-family:monospace;font-weight:600;">
+                                {{ $appeal->compound->vehicle->plate_no }}
                             </span>
                         </td>
                         <td>{{ $appeal->compound->vehicle->user->name }}</td>
-                        <td>
-                            @if($appeal->compound->vehicle->user->matric_or_staff_no)
-                                {{ $appeal->compound->vehicle->user->matric_or_staff_no }}
-                            @else
-                                <span class="badge bg-secondary">External</span>
-                            @endif
-                        </td>
                         <td>{{ $appeal->compound->offenceType->name }}</td>
                         <td>{{ number_format($appeal->compound->offenceType->amount, 2) }}</td>
-                        <td style="max-width: 200px;">
-                            <span class="d-inline-block text-truncate" style="max-width: 180px; cursor: help;" title="{{ $appeal->reason }}">
-                                {{ $appeal->reason }}
-                            </span>
+                        <td>{{ number_format($appeal->compound->offenceType->amount / 2, 2) }}</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                data-bs-toggle="modal" data-bs-target="#reasonModal"
+                                onclick="showReason('#C-{{ str_pad($appeal->compound->id, 4, '0', STR_PAD_LEFT) }}', {{ Js::from($appeal->reason) }})">
+                                View
+                            </button>
                         </td>
-                        <td class="pe-4 text-end">
+                        <td>
                             @if($appeal->result === 'pending')
-                                <div class="d-flex justify-content-end gap-1">
+                                <div class="d-flex gap-1">
                                     <form method="POST" action="{{ route('officer.appeal.update', $appeal) }}">
                                         @csrf
-                                        @method('PATCH')
                                         <input type="hidden" name="result" value="approved">
                                         <button type="submit" class="btn btn-sm btn-outline-success px-3"
                                             onclick="return confirm('Approve this appeal? The compound amount will be reduced by 50%.')">
@@ -81,7 +72,6 @@
                                     </form>
                                     <form method="POST" action="{{ route('officer.appeal.update', $appeal) }}">
                                         @csrf
-                                        @method('PATCH')
                                         <input type="hidden" name="result" value="rejected">
                                         <button type="submit" class="btn btn-sm btn-outline-danger px-3"
                                             onclick="return confirm('Reject this appeal?')">
@@ -104,40 +94,55 @@
                 </tbody>
             </table>
 
-            <div id="noResults" class="text-center text-muted py-4" style="display:none;">
-                No matching appeals found.
-            </div>
+        </div>
+    </div>
+</div>
 
+{{-- Reason Modal --}}
+<div class="modal fade" id="reasonModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Appeal Reason — <span id="reason-ref"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="reason-text" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('appeal-search');
-        const rows = document.querySelectorAll('.appeal-row');
-        const noResults = document.getElementById('noResults');
+function filterAppeals() {
+    const query = document.getElementById('appeal-search').value.toLowerCase();
+    const rows  = document.querySelectorAll('.appeal-row');
+    let visible = 0;
 
-        function filterAppeals() {
-            const query = searchInput.value.toLowerCase().trim();
-            let visible = 0;
-
-            rows.forEach(row => {
-                const match = row.dataset.search.includes(query);
-                if (match) {
-                    row.style.display = '';
-                    visible++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            noResults.style.display = visible === 0 ? 'block' : 'none';
-        }
-
-        if (searchInput) {
-            searchInput.addEventListener('input', filterAppeals);
-        }
+    rows.forEach(row => {
+        const match = row.dataset.search.includes(query);
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
     });
+
+    const old = document.getElementById('no-results-row');
+    if (old) old.remove();
+
+    if (visible === 0 && rows.length > 0) {
+        const tbody = document.querySelector('#appeals-table tbody');
+        const tr = document.createElement('tr');
+        tr.id = 'no-results-row';
+        tr.innerHTML = '<td colspan="8" class="text-center text-muted py-3">No matching appeals found.</td>';
+        tbody.appendChild(tr);
+    }
+}
+
+function showReason(ref, reason) {
+    document.getElementById('reason-ref').textContent  = ref;
+    document.getElementById('reason-text').textContent = reason;
+}
 </script>
 @endsection

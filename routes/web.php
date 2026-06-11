@@ -9,7 +9,7 @@ use App\Http\Controllers\User\AppealController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\OffenceTypeController;
-
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -17,12 +17,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        if (Auth::user()?->role === 'user') {
-            return redirect()->route('user.my-vehicle');
-        }
-        return view('dashboard');
-    })->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Admin only
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
